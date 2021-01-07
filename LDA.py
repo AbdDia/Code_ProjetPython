@@ -228,22 +228,28 @@ class LDA():
      
         
     def variables_explicatives(self,x) :
+        #La fonction variables_explicatives() permet de convertir des variables explicatives en variables numériques. Dans le cadre de notre projet LDA il suffit de lui donner
+        #en entrer les variables à convertir(explicatives) et il retourne variable un dataframe de variables numériques.
+        
         #convertir les colonnes non-numérique de x en objet :
         d = dict()#Creation d'un dictionnaire vide 
+        #Apply permet ici de faire une boucle comme avec R. Cette ligne de code permet de convertir tester une variables est numérique ou pas
         d = x.apply(lambda s: pd.to_numeric(s, errors='coerce').notnull().all()) 
-        #dictionnaire qui check si une colonne de x est numeric sinon il renvoie false comme valeur
-        liste = d.values#liste reçoit les valeurs de d
+        liste = d.values #liste reçoit les valeurs de d : soit False si la variable n'est pas numérqiue ou True sinon.
         for i in range(len(x.columns)) :
+            #On convertit toutes les variables qui ne sont pas numériques en objet. 
             if liste[i]== False :
-                x.iloc[:,i] = x.iloc[:,i].astype(object)#convertir les type non-numeric en objet
+                x.iloc[:,i] = x.iloc[:,i].astype(object) #convertir les type non-numeric en objet
 
-        #Recodage des colonnes(variables) explicatives :
+        #Recodage des colonnes(variables) explicatives en utilisant get_dummies de pandas:
         for i in range(x.shape[1]) : 
             if x.iloc[:,i].dtype == object :
                 dummy= pd.get_dummies(x.iloc[:,i], drop_first = True)
                 for j in range(dummy.shape[1]) :
-                    x = pd.concat([x,dummy.iloc[:,j]], axis=1)#concatener chaque colonne de dummy avec x
-        x = x._get_numeric_data()#permet de suprimer du dataframe les columns qui ne sont pas numerique
+                    #concatener (rajouter les variables recoder à x)chaque colonne de dummy avec x le dataframe de base 
+                    x = pd.concat([x,dummy.iloc[:,j]], axis=1)
+        #permet de suprimer du dataframe les columns qui ne sont pas numerique
+        x = x._get_numeric_data()
         return x
      
      
