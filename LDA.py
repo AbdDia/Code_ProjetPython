@@ -433,7 +433,7 @@ class LDA():
         p = XP.shape[1]
         my_pred=list()
         for i in range(XP.shape[0]):
-            omega = XP.loc[i].values
+            omega = XP.iloc[i].values
             x = omega.reshape(1,p)@self.coef_ + self.intercept_
             my_pred.append(np.argmax(x))
         pred = self.classes_.take(my_pred)
