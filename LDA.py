@@ -1,26 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Jan  3 21:53:17 2021
+Application créée dans le cadre d'un projet de L3 IDS à l'Université Lyon 2.
 
-@author: AK
+Groupe constitué de Mamadou DIALLO, Aymeric DELEFOSSE et Aleksandra
+KRUCHININA.
 """
 
-import numpy as np 
+
+import numpy as np
 import pandas as pd
-from fpdf import FPDF
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
+from fpdf import FPDF
 import datapane as dp
 import seaborn as sns
 
+
 class PDF(FPDF):
-    """Facilite l'affichage du bas de page
-    automatique dès la création d'une instance pdf.
-    Ref.: https://pyfpdf.readthedocs.io/en/latest/Tutorial/index.html
+    """Facilite l'affichage du bas de page automatique dès la création d'une 
+    instance PDF.
+    Ref. : https://pyfpdf.readthedocs.io/en/latest/Tutorial/index.html
     """
     # Page footer
+
     def footer(self):
         # Position at 1.5 cm from bottom
         self.set_y(-15)
@@ -30,8 +34,9 @@ class PDF(FPDF):
         self.set_text_color(128)
         # Page number
         self.cell(0, 10, 'Page ' + str(self.page_no()) + '/{nb}', 0, 0, 'C')
-        
-def verification_NA(X,Y):
+
+
+def verification_NA(X, Y):
     """Vérification pour les valeurs nulles.
     Les observations avec des valeurs nulles ne sont pas prises
     en compte pour l'analyse.
@@ -43,23 +48,24 @@ def verification_NA(X,Y):
         Input data.
     y : array-like of shape (n_samples,) or (n_samples, n_targets) 
         Valeurs cibles.
-        
+
     Retour
     -------
     X : Input data sans NA.
     y : Valeurs cibles sans NA.
-    
+
     """
     n, p = X.shape
     # il faut concatener les inputs pour supprimer les lignes
     # avec des valeurs nulles
-    df = pd.concat((X,Y),axis=1)
-    df.dropna(axis=0,inplace=True)
+    df = pd.concat((X, Y), axis=1)
+    df.dropna(axis=0, inplace=True)
     n_del = n - df.shape[0]
-    X = df.iloc[:,:-1]
-    Y = df.iloc[:,-1]
-    print('Attention: ',n_del,' observations ont été supprimees')
+    X = df.iloc[:, :-1]
+    Y = df.iloc[:, -1]
+    print('Attention : ', n_del, ' observations ont été supprimees.')
     return X, Y
+
 
 def freq_relat(y, n):
     """Calcul des fréquences relatives.
@@ -68,21 +74,21 @@ def freq_relat(y, n):
     ----------
     y : array-like of shape (n_samples,) or (n_samples, n_targets) 
         Target values.
-        
+
     Retour
     -------
     freq : fréquences relatives par classe
     cnt : nombre d'occurences par classe
-    
+
     """
-    #Nk nombre d'effectifs par classes 
+    # Nk nombre d'effectifs par classes
     classes, cnt = np.unique(y, return_counts=True)
-    freq = cnt/n 
+    freq = cnt/n
     return freq, cnt
 
-def means_class(X,y):
-    """Calcul des moyennes conditionnelles
-    selon le groupe d'appartenance.
+
+def means_class(X, Y):
+    """Calcul des moyennes conditionnelles selon le groupe d'appartenance.
 
     Paramètres
     ----------
@@ -90,20 +96,22 @@ def means_class(X,y):
         Input data.
     y : array-like of shape (n_samples,) or (n_samples, n_targets) 
         Target values.
+        
     Retour
     -------
     means_cl : moyennes conditionnelles par classe
     """
-    #y1 convertion des valeurs cibles en numérique
-    classes, y1 = np.unique(y, return_inverse=True)
-    #Nk nombre d'effectifs par classes
-    cnt = np.bincount(y1) 
-    #initiation d'une matrice remplie de 0
-    means = np.zeros(shape=(len(classes), X.shape[1])) 
-    np.add.at(means, y1, X)
+    # y1 convertion des valeurs cibles en numérique
+    classes, numericY = np.unique(Y, return_inverse=True)
+    # Nk nombre d'effectifs par classes
+    cnt = np.bincount(numericY)
+    # initiation d'une matrice remplie de 0
+    means = np.zeros(shape=(len(classes), X.shape[1]))
+    np.add.at(means, numericY, X)
     means_cl = means / cnt[:, None]
     return means_cl
-        
+
+
 def cov_matrix(DATA):
     """Calcul de la matrice de covariance totale (V) ainsi que sa version 
     biaisée (Vb).
@@ -113,10 +121,11 @@ def cov_matrix(DATA):
     DATA : pandas DataFrame 
         Jeu de données
     """
-    n = DATA.shape[0] # taille de l'échantillon
-    V = DATA.cov() # matrice de covariace totale
-    Vb = (n-1)/n * V # matrice de covariance totale biaisée
+    n = DATA.shape[0]  # taille de l'échantillon
+    V = DATA.cov()  # matrice de covariace totale
+    Vb = (n-1)/n * V  # matrice de covariance totale biaisée
     return (V, Vb)
+
 
 def pooled_cov_matrix(DATA, CLASS):
     """Calcul de la matrice de covariance intra-classe (W) ainsi que sa 
@@ -132,11 +141,11 @@ def pooled_cov_matrix(DATA, CLASS):
     n = DATA.shape[0]  # taille de l'échantillon
     K = len(DATA[CLASS].unique())  # nombre de classes
     W = 0  # initialisation de W
-    for i in DATA[CLASS].unique():
-        Vk = DATA.loc[DATA[CLASS] == i].cov()
-        W += (DATA[CLASS].value_counts()[i] - 1) * Vk
-    W *= 1/(n-K) # matrice de covariance intra-classes
-    Wb = (n-K)/n * W # matrice de covariance intra-classes biaisée
+    for modalities in DATA[CLASS].unique():
+        Vk = DATA.loc[DATA[CLASS] == modalities].cov()
+        W += (DATA[CLASS].value_counts()[modalities] - 1) * Vk
+    W *= 1/(n-K)  # matrice de covariance intra-classes
+    Wb = (n-K)/n * W  # matrice de covariance intra-classes biaisée
     return (W, Wb)
 
 
@@ -159,10 +168,11 @@ def wilks(Vb, Wb):
     """
     # les paramètres d'entrée doivent être des matrices numpy ou
     # des DataFrame pandas
-    detVb = np.linalg.det(Vb) # dét. de la matrice de cov. totale biaisée
-    detWb = np.linalg.det(Wb) # dét. de la matrice de cov. 
-                              # intra-classes biaisée
+    detVb = np.linalg.det(Vb)  # dét. de la matrice de cov. totale biaisée
+    detWb = np.linalg.det(Wb)  # dét. de la matrice de cov.
+    # intra-classes biaisée
     return (detWb / detVb)
+
 
 def wilks_log(Vb, Wb):
     """Calcul du Lambda de Wilks par le rapport entre les logarithmes naturels
@@ -182,12 +192,13 @@ def wilks_log(Vb, Wb):
     Les matrices Pandas permettent de garder un résultat avec le nom des 
     variables.
     """
-    detVb = np.linalg.slogdet(Vb) # log. nat. du dét. de la matrice de cov.
-                                  # totale biaisée
-    detWb = np.linalg.slogdet(Wb) # log. nat. du dét. de la matrice de cov.
-                                  # intra-classes biaisée
+    detVb = np.linalg.slogdet(Vb)  # log. nat. du dét. de la matrice de cov.
+    # totale biaisée
+    detWb = np.linalg.slogdet(Wb)  # log. nat. du dét. de la matrice de cov.
+    # intra-classes biaisée
     WilksValue = np.exp((detWb[0]*detWb[1])-(detVb[0]*detVb[1]))
     return WilksValue
+
 
 def wilks_decay(VAR, Vb, Wb):
     """Calcul des différentes valeurs de chaque valeur du Lambda de Wilks pour
@@ -226,7 +237,8 @@ def p_value(F, ddl1, ddl2):
     else:
         p = 1.0 - stats.f.cdf(F, ddl1, ddl2)
     return p
-    
+
+
 def createWebFile(filename):
     with open(filename, "w") as f:
         f.write("""<!DOCTYPE html>
@@ -244,225 +256,240 @@ def createWebFile(filename):
   </head>
   <body>
     <div class="container text-center">
-        <h2>Proc&#233;dure STEPDISC</h2>""")        
+        <h2>Proc&#233;dure STEPDISC</h2>""")
         f.close()
-    
 
 
 class LDA():
-    '''Analyse Discriminante Predictive reproduisant les calculs et les sorties
-    des methodes PROC DISCRIM et STEPDISC de SAS
+    '''Analyse Discriminante Linéaire et Prédictive reproduisant les calculs 
+    et les sorties des méthodes PROC DISCRIM et STEPDISC de SAS
     TBA = to be updated.
     '''
-    
-    
+
     def __init__(self):
         pass
-        
-    def variables_explicatives(self,x) :
-        """La fonction variables_explicatives() permet de convertir des variables explicatives en variables numériques. 
-        Dans le cadre de notre projet LDA il suffit de lui donner en entrer les variables à convertir(explicatives) et 
-        il retourne variable un dataframe de variables numériques.
-        """
-        
-        d = dict() #Creation d'un dictionnaire vide 
-        #Apply permet ici de faire une boucle comme avec R. 
-        #Cette ligne de code permet de convertir tester une variables est numérique ou pas
-        d = x.apply(lambda s: pd.to_numeric(s, errors='coerce').notnull().all()) 
-        liste = d.values # False si la variable n'est pas numérqiue ou True sinon.
-        for i in range(len(x.columns)) :
-            #On convertit toutes les variables qui ne sont pas numériques en objet. 
-            if liste[i]== False :
-                x.iloc[:,i] = x.iloc[:,i].astype(object) #convertir les type non-numeric en objet
 
-        #Recodage des colonnes(variables) explicatives en utilisant get_dummies de pandas:
-        for i in range(x.shape[1]) : 
-            if x.iloc[:,i].dtype == object :
-                dummy= pd.get_dummies(x.iloc[:,i], drop_first = True)
-                for j in range(dummy.shape[1]) :
-                    #concatener (rajouter les variables recoder à x)chaque colonne de dummy avec x le dataframe de base 
-                    x = pd.concat([x,dummy.iloc[:,j]], axis=1)
-        #permet de suprimer du dataframe les columns qui ne sont pas numerique
+    def variables_explicatives(self, x):
+        """La fonction variables_explicatives() permet de convertir des 
+        variables explicatives en variables numériques. 
+        Dans le cadre de notre projet LDA il suffit de lui donner en entrer 
+        les variables à convertir(explicatives) et il retourne variable un d
+        ataframe de variables numériques.
+        """
+
+        d = dict()  # Creation d'un dictionnaire vide
+        # Apply permet ici de faire une boucle comme avec R.
+        # Test puis conversion de la variable en numérique si elle ne l'est pas
+        d = x.apply(lambda s: pd.to_numeric(
+            s, errors='coerce').notnull().all())
+        # Renvoie False si la variable n'est pas numérique, True sinon.
+        liste = d.values
+        for i in range(len(x.columns)):
+            # Conversion de toutes les variables qui ne sont pas numériques 
+            # en objet.
+            if liste[i] == False:
+                # Conversion des types "non-numeric" en "objet"
+                x.iloc[:, i] = x.iloc[:, i].astype(object)
+
+        # Recodage des colonnes (variables explicatives) grâce à la fonction
+        # get_dummies de pandas
+        for i in range(x.shape[1]):
+            if x.iloc[:, i].dtype == object:
+                dummy = pd.get_dummies(x.iloc[:, i], drop_first=True)
+                for j in range(dummy.shape[1]):
+                    # Concatenation (rajout des variables recodees à x) pour 
+                    # chaque colonne de dummy, avec x le dataframe de base
+                    x = pd.concat([x, dummy.iloc[:, j]], axis=1)
+        # Suppression des colonnes non numerics
         x = x._get_numeric_data()
         return x
-     
-     
-    def fit(self,X,y):
-        """Apprentissage de LinearDiscriminantAnalysis model.
-        Calcul également des valeurs supplementaire pour l'affichage,
-        comme: la matrice de covariance intra-classe, 
-        lambda de Wilks, F Rao, p-value
-           
-        Paramètrs
+
+    def fit(self, X, Y):
+        """Apprentissage d'un modèle d'analyse discrimnante linéiare.
+        Calcul également des valeurs supplèmentaire pour l'affichage tels que
+        la matrice de covariance intra-classe, le lambda de Wilks, la F-stat
+        et la p-value.
+
+        Paramètres
         ----------
         X : array-like of shape (n_samples, n_features)
             Training data.
-        y : array-like of shape (n_samples,)
+        Y : array-like of shape (n_samples,)
             Target values.
+            
         Retour
         -------
         self.intercept_ : l'intercept 
         self.coef_ : les coefficients
         """
-        
-        #nombre d'effectif (n) et nombre de descripteurs (p)
-        n, p = X.shape
-        #noms des variables              
-        cols = X.columns
-        # supprimer des valeurs nulles de l'analyse
-        X, y = verification_NA(X,Y)
-        X = X.values
-        y = y.values
-        #nombre de classes 
-        K = len(np.unique(y))
-        #noms des classes
-        classes = np.unique(y)
-        self.classes_ = classes
-        
-        #affichage
-        self.Info_ = pd.DataFrame([n,p,K,n-1,n-K,K-1], 
-                                  index = ["Total sample size", "Variables", "Classes", 
-                                           "Total DDL", "DDL in classes", "DDL between classes"], 
-                                  columns=["Count"])     
-                                
-        # frequences relatives des classes
-        freq, cnt = freq_relat(y, n)
-        pi_k = pd.DataFrame(freq.reshape(1,K), columns = classes) 
-        
-        #affichage 
-        pi_classe = [cnt,freq]
-        self.pi_classe_ = pd.DataFrame(pi_classe,  
-                                       columns = classes, 
-                                       index = ["Frequence", "Proportion"]).transpose()
-        
-        #moy cond
-        means = means_class(X,y)
-        
-        #matrice de cov. total
-        Vt = np.cov(X.T)
-        #matrice de cov. total biaisée
-        Vb = (n-1)/n*Vt
-        
-        #restitution intermediaire
-        my_pd = pd.concat((pd.DataFrame(X,columns = cols),
-                           pd.DataFrame(y.reshape(n,1),columns=["target"])),axis=1)
 
-        #matrice de variance covariance par classe
-        #determinants respectifs et log(det)
+        # nombre d'effectif (n) et nombre de descripteurs (p)
+        n, p = X.shape
+        # noms des variables
+        cols = X.columns
+        # suppression des valeurs nulles de l'analyse
+        X, Y = verification_NA(X, Y)
+        X = X.values
+        Y = Y.values
+        # nombre de classes
+        K = len(np.unique(Y))
+        # noms des classes
+        classes = np.unique(Y)
+        self.classes_ = classes
+
+        # affichage
+        self.Info_ = pd.DataFrame([n, p, K, n-1, n-K, K-1],
+                                  index=["Total sample size", "Variables",
+                                         "Classes", "Total DDL", 
+                                         "DDL in classes", 
+                                         "DDL between classes"],
+                                  columns=["Count"])
+
+        # frequences relatives des classes
+        freq, cnt = freq_relat(Y, n)
+        pi_k = pd.DataFrame(freq.reshape(1, K), columns=classes)
+
+        # affichage
+        pi_classe = [cnt, freq]
+        self.pi_classe_ = pd.DataFrame(pi_classe,
+                                       columns=classes,
+                                       index=["Frequence", "Proportion"]).transpose()
+
+        # moy cond
+        means = means_class(X, Y)
+
+        # matrice de cov. total
+        Vt = np.cov(X.T)
+        # matrice de cov. total biaisée
+        Vb = (n-1)/n*Vt
+
+        # restitution intermediaire
+        my_pd = pd.concat((pd.DataFrame(X, columns=cols),
+                           pd.DataFrame(Y.reshape(n, 1), columns=["target"])), axis=1)
+
+        # matrice de variance covariance par classe
+        # determinants respectifs et log(det)
         mvc = dict()
         dvc = dict()
         logdvc = dict()
-        for elem in np.unique(y):
-            mvc[elem] = np.cov(my_pd[my_pd['target']==elem][cols].T)        
+        for elem in np.unique(Y):
+            mvc[elem] = np.cov(my_pd[my_pd['target'] == elem][cols].T)
             dvc[elem] = np.linalg.det(mvc[elem])
             logdvc[elem] = np.log(dvc[elem])
-            
-        #retrouve la matrice W de SAS + LW per classe
+
+        # retrouve la matrice W de SAS + LW per classe
         W = 0
-        for i,elem in enumerate(mvc.keys()):
+        for i, elem in enumerate(mvc.keys()):
             W += (cnt[i]-1)*mvc[elem]
-        W = (W/(n-K)) # matrice de covariance intra-classe
-        Wb = (n-K)/n * W # matrice de covariance intra-classes biaisée
+        W = (W/(n-K))  # matrice de covariance intra-classe
+        Wb = (n-K)/n * W  # matrice de covariance intra-classes biaisée
         self.W_ = W
         self.Wb_ = Wb
-        
-        #matrice inverse de W
+
+        # matrice inverse de W
         invW = np.linalg.inv(W)
-        
-        #rang, determinant et log(det) de la matrice W
+
+        # rang, determinant et log(det) de la matrice W
         RangW = np.linalg.matrix_rank(W)
         DetW = np.linalg.det(W)
         LogDetW = np.log(DetW)
-        
-        #affichage de la matrice
-        self.CovI_ = pd.DataFrame([RangW,LogDetW],
-                            index = ["Rang of the covariance matrix W", 
-                                     "Log of the determinant of cov. matrix"], 
-                            columns =["Values"])
 
-        #intercept
-        self.intercept_ = np.log(pi_k.values).reshape(1,K) - 0.5*np.diagonal(means@invW@means.T)
-        
-        #coef
+        # affichage de la matrice
+        self.CovI_ = pd.DataFrame([RangW, LogDetW],
+                                  index=["Rang of the covariance matrix W",
+                                         "Log of the determinant of cov. matrix"],
+                                  columns=["Values"])
+
+        # intercept
+        self.intercept_ = np.log(pi_k.values).reshape(
+            1, K) - 0.5*np.diagonal(means@invW@means.T)
+
+        # coef
         self.coef_ = (means@invW).T
-        
-        #affichage
-        Intercept_ = pd.DataFrame(self.intercept_, columns = classes, index = ["Const"])
-        Coef_ = pd.DataFrame(self.coef_, columns = classes, index = cols) 
-        self.InterCoef_ = pd.concat([Intercept_,Coef_]) 
-        
-        #lambda de Wilks 
+
+        # affichage
+        Intercept_ = pd.DataFrame(
+            self.intercept_, columns=classes, index=["Const"])
+        Coef_ = pd.DataFrame(self.coef_, columns=classes, index=cols)
+        self.InterCoef_ = pd.concat([Intercept_, Coef_])
+
+        # lambda de Wilks
         LW = np.linalg.det(Wb)/np.linalg.det(Vb)
-        ddlNum = p * (K-1) 
-        #valeur intermédiaire pour calcul du ddl dénominateur 
-        temp = p**2 + (K-1)**2 - 5 
-        temp = np.where(temp > 0,np.sqrt(((p**2) * ((K-1)**2) - 4)/temp),1) 
-        #ddl dénominateur 
-        ddlDenom = (2*n-p-K-2)/2 * temp - (ddlNum - 2)/2 
-         
-        #stat de test 
-        FRao = LW**(1/temp) 
-        FRao = ((1-FRao)/FRao)*(ddlDenom/ddlNum) 
-         
-        #p-value i 
+        ddlNum = p * (K-1)
+        # valeur intermédiaire pour calcul du ddl dénominateur
+        temp = p**2 + (K-1)**2 - 5
+        temp = np.where(temp > 0, np.sqrt(((p**2) * ((K-1)**2) - 4)/temp), 1)
+        # ddl dénominateur
+        ddlDenom = (2*n-p-K-2)/2 * temp - (ddlNum - 2)/2
+
+        # stat de test
+        FRao = LW**(1/temp)
+        FRao = ((1-FRao)/FRao)*(ddlDenom/ddlNum)
+
+        # p-value i
         p_val = p_value(FRao, ddlNum, ddlDenom)
-        
-        #affichage
-        Statistiques = [LW,FRao, ddlNum, ddlDenom, p_val]
-        self.Stat_ = pd.DataFrame(Statistiques, 
-                                    index = ["Valeur", "Valeur F", "DDL num.", 
-                                             "DDL den.", "p_value"], 
-                                    columns = ["Wilks' Lambda"]).transpose()
-        
+
+        # affichage
+        Statistiques = [LW, FRao, ddlNum, ddlDenom, p_val]
+        self.Stat_ = pd.DataFrame(Statistiques,
+                                  index=["Valeur", "Valeur F", "DDL num.",
+                                         "DDL den.", "p_value"],
+                                  columns=["Wilks' Lambda"]).transpose()
+
         return self.intercept_, self.coef_
-    
-    def predict(self,XP):
+
+    def predict(self, XP):
         """Prédiction des classes sur les valeurs à prédire XP.
-        
-        Paramètrs
+
+        Paramètres
         ----------
         XP : array-like of shape (n_samples, n_features)
         Valeurs à predire.
-        
+
         Retour
         -------
         pred : ndarray of shape (n_samples,)
         """
-        
-        #nombre de descripteurs  
+
+        # nombre de descripteurs
         p = XP.shape[1]
-        my_pred=list()
+        my_pred = list()
         for i in range(XP.shape[0]):
             omega = XP.iloc[i].values
-            x = omega.reshape(1,p)@self.coef_ + self.intercept_
+            x = omega.reshape(1, p)@self.coef_ + self.intercept_
             my_pred.append(np.argmax(x))
         pred = self.classes_.take(my_pred)
         return pred
-    
-    def confusion_matrix(self,y_true, y_pred):
+
+    def confusion_matrix(self, y_true, y_pred):
         '''Calcul d'une matrice de confusion.
+        
         Paramètres
         ----------
         y_true : Series ou DataFrame
             Vraies valeurs de la variable cible.
         y_pred : array-like of shape (n_samples,) 
             Valeurs predites par le modèle de la variable cible.
-        Retour:
+            
+        Retour
+        ----------
         conf_mat : matrice de confusion
         '''
         class_names = list(np.unique(y_true))
         class_to_num = {cl: num for num, cl in enumerate(np.unique(y_true))}
         y_true = np.array(y_true.apply(lambda cl: class_to_num[cl]))
         y_pred = np.array(pd.Series(y_pred).apply(lambda cl: class_to_num[cl]))
-        conf_mat = np.zeros((len(np.unique(y_true)),len(np.unique(y_true))))
+        conf_mat = np.zeros((len(np.unique(y_true)), len(np.unique(y_true))))
         for ind_p in range(len(np.unique(y_true))):
             for ind_t in range(len(np.unique(y_true))):
-                conf_mat[ind_p,ind_t] = ((np.sum((y_pred==ind_p) &(y_true==ind_t))))
+                conf_mat[ind_p, ind_t] = (
+                    (np.sum((y_pred == ind_p) & (y_true == ind_t))))
         self.confusion_matrix = conf_mat
         return self.confusion_matrix
 
-    def confusion_matrix_graph(self,y_true, y_pred):
+    def confusion_matrix_graph(self, y_true, y_pred):
         '''Affichage heatmap d'une matrice de confusion.
+        
         Paramètres
         ----------
         y_true : Series ou DataFrame
@@ -471,45 +498,50 @@ class LDA():
             Valeurs predites de la variable cible.
         '''
         class_names = list(np.unique(y_true))
-        df_cm = pd.DataFrame(self.confusion_matrix, index=class_names, columns=class_names)
-        plt.figure(figsize = (10,7))
-        sns.heatmap(df_cm, annot=True);
-    
-    def accuracy_score(self,y_true, y_pred):
+        df_cm = pd.DataFrame(self.confusion_matrix,
+                             index=class_names,
+                             columns=class_names)
+        plt.figure(figsize=(10, 7))
+        sns.heatmap(df_cm, annot=True)
+
+    def accuracy_score(self, y_true, y_pred):
         '''Calcul du taux de précision.
+        
         Paramètres
         ----------
         y_true : Series ou DataFrame
             Vraies valeurs de la variable cible.
         y_pred : array-like of shape (n_samples,) 
             Valeurs predites de la variable cible.
+            
         Retour:
         ----------
         accuracy : (TP + TN) / (P + N)
         '''
-        
+
         class_to_num = {cl: num for num, cl in enumerate(np.unique(y_true))}
         y_true = np.array(y_true.apply(lambda cl: class_to_num[cl]))
         y_pred = np.array(pd.Series(y_pred).apply(lambda cl: class_to_num[cl]))
-        accuracy = (np.sum(y_pred==y_true))/y_true.shape[0]
+        accuracy = (np.sum(y_pred == y_true))/y_true.shape[0]
         return accuracy
-    
-    def create_HTML(self) :
-        """Creation du rapport publiable HTML via la fonction report de la librairie datapane.
-        
+
+    def create_HTML(self):
+        """Creation du rapport publiable HTML via la fonction report de la 
+        librairie datapane.
+
         """
-        
-        #Les variaables d1,d2,d3,d4,d5,d6 reçoivent les valeurs de la fonction fit()
-        d1,d2,d3,d4,d5,d6 = self.Info_, self.pi_classe_, self.W_, self.CovI_, self.InterCoef_, self.Stat_ 
-        r = dp.Report(dp.Text("# Linear Discriminant Analysis"),dp.DataTable(d1), 
-                      dp.DataTable(d2), dp.DataTable(d3), dp.DataTable(d4), 
+
+        # Les variaables d1,d2,d3,d4,d5,d6 reçoivent les valeurs de la fonction fit()
+        d1, d2, d3, d4, d5, d6 = self.Info_, self.pi_classe_, self.W_, self.CovI_, self.InterCoef_, self.Stat_
+        r = dp.Report(dp.Text("# Linear Discriminant Analysis"), dp.DataTable(d1),
+                      dp.DataTable(d2), dp.DataTable(d3), dp.DataTable(d4),
                       dp.DataTable(d5), dp.Table(d6))
         return r.save(path='Rapport_HTML_ProcDiscrim.html', open=True)
-    
+
     def create_pdf(self):
         """Création d'un fichier pdf.
         Les sorites ressemblent à celles de la procédure DISCRIM de SAS.
-        
+
         """
         x = self.Info_
         pdf = PDF()
@@ -517,73 +549,80 @@ class LDA():
         pdf.add_page()
 
         pdf.set_font('Arial', 'B', 14)
-        pdf.cell(180,10,'General information about the data',border=0,align='C')
+        pdf.cell(180, 10, 'General information about the data',
+                 border=0, align='C')
         pdf.ln()
         pdf.set_font('Arial', '', 12)
-        for indx,elem in enumerate(x.index):
-            pdf.cell(180,10,str(x.index[indx]) + ': ' + str(x.iloc[indx,0]),border=0,align='L')
+        for indx, elem in enumerate(x.index):
+            pdf.cell(180, 10, str(x.index[indx]) + ': ' +
+                     str(x.iloc[indx, 0]), border=0, align='L')
             pdf.ln()
         pdf.ln()
 
         x = self.pi_classe_
         pdf.set_font('Arial', 'B', 14)
-        pdf.cell(180,10,' '*(len(max(x.index,key=len))*2) + 'Frequences ' + 
-                 'Proportions',border=0,align='C')
+        pdf.cell(180, 10, ' '*(len(max(x.index, key=len))*2) + 'Frequences ' +
+                 'Proportions', border=0, align='C')
         pdf.ln()
         pdf.set_font('Arial', '', 12)
-        j=0
-        for indx,elem in enumerate(x.index):
-            pdf.cell(80,10,str(x.index[indx]) + ': ' + str(x.iloc[indx,j]) + '   ' + 
-                     str(round(x.iloc[indx,j+1],4)),border=0,align='L')
+        j = 0
+        for indx, elem in enumerate(x.index):
+            pdf.cell(80, 10, str(x.index[indx]) + ': ' + str(x.iloc[indx, j]) + '   ' +
+                     str(round(x.iloc[indx, j+1], 4)), border=0, align='L')
             pdf.ln()
         pdf.ln()
 
         x = self.CovI_
         pdf.set_font('Arial', 'B', 14)
-        pdf.cell(180,10,'Informations on the covariance matrix',border=0,align='C')
+        pdf.cell(180, 10, 'Informations on the covariance matrix',
+                 border=0, align='C')
         pdf.ln()
         pdf.set_font('Arial', '', 12)
-        pdf.cell(180,10,' '*(len(max(x.index,key=len))*2) + 'Values ',border=0,align='L')
+        pdf.cell(180, 10, ' '*(len(max(x.index, key=len))*2) +
+                 'Values ', border=0, align='L')
         pdf.ln()
-        for indx,elem in enumerate(x.index):
-            pdf.cell(180,10,str(x.index[indx]) + ': ' + str(x.iloc[indx,0]),border=0,align='L')
+        for indx, elem in enumerate(x.index):
+            pdf.cell(180, 10, str(x.index[indx]) + ': ' +
+                     str(x.iloc[indx, 0]), border=0, align='L')
             pdf.ln()
         pdf.ln()
 
         x = self.InterCoef_
         pdf.set_font('Arial', 'B', 14)
-        pdf.cell(180,10,"Function of lda and its' intercept and coefficients" ,border=0,align='C')
+        pdf.cell(
+            180, 10, "Function of lda and its' intercept and coefficients", border=0, align='C')
         pdf.ln()
         pdf.set_font('Arial', '', 12)
-        #lign with column names
-        my_str=' '*(len(max(x.index,key=len))*2)
-        for indx,elem in enumerate(x.columns):
+        # lign with column names
+        my_str = ' '*(len(max(x.index, key=len))*2)
+        for indx, elem in enumerate(x.columns):
             sub_str = str(x.columns[indx]) + ' '
             my_str += sub_str
-        pdf.cell(180,10,my_str,border=0,align='L')
+        pdf.cell(180, 10, my_str, border=0, align='L')
         pdf.ln()
 
-        my_str=''
-        for indx,elem in enumerate(x.index):
+        my_str = ''
+        for indx, elem in enumerate(x.index):
             #print(indx, elem)
             my_str = str(x.index[indx])
-            #print(my_str)
+            # print(my_str)
             for j in range(len(x.columns)):
-                #print(j)
-                my_str += ' ' + str(round(x.iloc[indx,j],6))
-                #print(my_str)
+                # print(j)
+                my_str += ' ' + str(round(x.iloc[indx, j], 6))
+                # print(my_str)
             if j == (len(x.columns)-1):
-                pdf.cell(150,10,my_str,border=0,align='L')
+                pdf.cell(150, 10, my_str, border=0, align='L')
                 pdf.ln()
 
         x = self.Stat_.T
         pdf.set_font('Arial', 'B', 14)
-        pdf.cell(180,10,"Statistics. Wilks' Lambda" ,border=0,align='C')
+        pdf.cell(180, 10, "Statistics. Wilks' Lambda", border=0, align='C')
         pdf.ln()
         pdf.set_font('Arial', '', 12)
 
-        for indx,elem in enumerate(x.index):
-            pdf.cell(180,10,str(x.index[indx]) + ': ' + str(x.iloc[indx,0]),border=0,align='L')
+        for indx, elem in enumerate(x.index):
+            pdf.cell(180, 10, str(x.index[indx]) + ': ' +
+                     str(x.iloc[indx, 0]), border=0, align='L')
             pdf.ln()
         pdf.ln()
 
@@ -591,9 +630,8 @@ class LDA():
         pdf.set_compression(True)
         pdf.set_display_mode('fullpage')
         pdf.output(title + '.pdf', 'F')
-        
 
-    def stepdisc(self, DATA, CLASS, SLENTRY, METHOD, 
+    def stepdisc(self, DATA, CLASS, SLENTRY, METHOD,
                  VAR=None, BIGDATA=False, CONSOLELOG=True, HTMLFILE=None):
         """Sélection de variables avec approche ascendante et descendante.
         Affiche le détail de chaque étape, avec la possibilité d'afficher les
@@ -674,12 +712,12 @@ class LDA():
 
         if VAR is None:
             # permet d'éviter à l'utilisateur de rentrer toutes les variables
-            # tout en lui permettant également de faire un stepdisc sur une 
+            # tout en lui permettant également de faire un stepdisc sur une
             # sélection de variables
             VAR = list(DATA.columns)
             VAR.remove(CLASS)
-        elif VAR is not None and type(VAR) != list:  
-            # permet de travailler sur des listes (optimisation) quelque soit la 
+        elif VAR is not None and type(VAR) != list:
+            # permet de travailler sur des listes (optimisation) quelque soit la
             # saisie utilisateur
             VAR = list(VAR)
 
@@ -692,30 +730,29 @@ class LDA():
         K = len(DATA[CLASS].unique())  # nombre de classes
         Vb = cov_matrix(DATA)[1]  # matrice de cov. totale biaisée
         Wb = pooled_cov_matrix(DATA, CLASS)[1]  # matrice de cov. intra-classes
-                                                # biaisée
+        # biaisée
         colnames = ["R-carre", "F-statistique", "p-value", "Lambda de Wilks"]
         # pour la sortie des résultats
         #--------#
 
-
         # affichage du graphique de la décroissance du Lambda de Wilks
         if BIGDATA == True and METHOD == "forward":
-            fig = plt.figure() # création d'un objet pour récup. html
+            fig = plt.figure()  # création d'un objet pour récup. html
             y = wilks_decay(VAR, Vb, Wb)
             #---- Récupération des valeurs ----#
             WilksCurveInfo = pd \
                 .DataFrame(
                     y,
-                    index = range(1,p+1)) \
-                .transpose() # permet l'affichage sous forme de "liste"
+                    index=range(1, p+1)) \
+                .transpose()  # permet l'affichage sous forme de "liste"
             #---- Création du graphique ----#
             WilksCurveFig = fig.add_subplot(111)
             WilksCurveFig.set_title("Décroissance du Lambda de Wilks")
             WilksCurveFig.set_xlabel("Nombre de variables sélectionnées")
             WilksCurveFig.set_ylabel("Valeur du Lambda de Wilks")
-            WilksCurveFig.set_xticks(range(1,p+1,2))
-            WilksCurveFig.plot(range(1,p+1), y, '-cx', color = 'c', 
-                               mfc = 'k', mec = 'k')
+            WilksCurveFig.set_xticks(range(1, p+1, 2))
+            WilksCurveFig.plot(range(1, p+1), y, '-cx', color='c',
+                               mfc='k', mec='k')
             #---- Fin création du graphique ----#
             if CONSOLELOG:
                 print(WilksCurveInfo)
@@ -725,27 +762,27 @@ class LDA():
                 dans le fichier `html`. 
                 La majorité des navigateurs modernes restituent correctement 
                 l'image.
-                Évite de devoir sauvegarde l'image "physiquement", sur le disque.
+                Évite de devoir sauvegarder l'image "physiquement", sur le 
+                disque.
                 """
                 tmpfile = BytesIO()
                 fig.savefig(tmpfile, format='png')
                 encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
                 with open(HTMLFILE, "a") as f:
                     f.write('<h3>D&#233;croissance du Lambda de Wilks</h3>'
-                        '<img src=\'data:image/png;base64,{}\'>'.format(encoded))
+                            '<img src=\'data:image/png;base64,{}\'>'.format(encoded))
                     f.write("<h4>Table de valeurs</h4>")
                     f.write(
                         WilksCurveInfo.to_html(classes="table table-striped "
                                                "table-responsive",
-                                              float_format="%.6f",
-                                              justify="center",
-                                              border=0,
-                                              index=False)
-                        )
+                                               float_format="%.6f",
+                                               justify="center",
+                                               border=0,
+                                               index=False)
+                    )
                     f.write("<p>&#192; vous de jouer quant au choix du nombre "
                             "optimal de classes !</p>")
                     f.close()
-
 
         #---- PROCÉDURE STEPDISC ----#
         if METHOD == "forward":
@@ -762,9 +799,11 @@ class LDA():
                                   Wb.loc[WilksVarSelection, WilksVarSelection])
                     # Fin du calcul du Lambda de Wilks
                     ddl1, ddl2 = K-1, n-K-q  # Calcul des degrés de liberté
-                    F = ddl2/ddl1 * (L_initial/L-1)  # Calcul de la statistique F
+                    # Calcul de la statistique F
+                    F = ddl2/ddl1 * (L_initial/L-1)
                     R = 1-(L/L_initial)  # Calcul du R² partiel
-                    pval = p_value(F, ddl1, ddl2) # Calcul de la p-value du test
+                    # Calcul de la p-value du test
+                    pval = p_value(F, ddl1, ddl2)
                     InfosVariables.append((R, F, pval, L))
 
                 dfResults = pd \
@@ -802,7 +841,7 @@ class LDA():
                                               float_format="%.6f",
                                               justify="center",
                                               border=0)
-                            )
+                        )
                         f.write("</div>")
                         f.close()
                 #--------#
@@ -826,10 +865,13 @@ class LDA():
                 else:
                     ListeVarRetenues.append(VariableRetenue)
                     VAR.remove(VariableRetenue)
-                    L_initial = dfResults.loc[VariableRetenue, "Lambda de Wilks"]
-                    SummaryVarRetenues.append(list(dfResults.loc[VariableRetenue]))
+                    L_initial = dfResults.loc[VariableRetenue,
+                                              "Lambda de Wilks"]
+                    SummaryVarRetenues.append(
+                        list(dfResults.loc[VariableRetenue]))
                     if CONSOLELOG:
-                        print("La variable %s est retenue." % (VariableRetenue))
+                        print("La variable %s est retenue." %
+                              (VariableRetenue))
                     if HTMLFILE is not None:
                         with open(HTMLFILE, "a") as f:
                             f.write("<p>La variable %s est retenue.</p>" % (
@@ -850,8 +892,6 @@ class LDA():
                 print("-------- Variables retenues --------")
                 print(Summary)
 
-
-
             if HTMLFILE is not None:
                 with open(HTMLFILE, "a") as f:
                     f.write("<h3>Synth&#232;se de la proc&#233;dure STEPDISC : "
@@ -865,7 +905,7 @@ class LDA():
                                         float_format="%.6f",
                                         justify="center",
                                         border=0)
-                        )
+                    )
                     f.write("</div></div></body></html>")
                     f.close()
             #---- FIN DE L'APPROCHE ASCENDANTE ----#
@@ -886,7 +926,8 @@ class LDA():
                     ddl1, ddl2 = K-1, n-K-q+1  # calcul des degrés de liberté
                     F = ddl2/ddl1*(L/L_initial-1)  # calcul de la statistique F
                     R = 1-(L_initial/L)  # calcul du R² partiel
-                    pval = p_value(F, ddl1, ddl2) # calcul de la p-value du test
+                    # calcul de la p-value du test
+                    pval = p_value(F, ddl1, ddl2)
                     InfosVariables.append((R, F, pval, L))
 
                 dfResults = pd \
@@ -924,7 +965,7 @@ class LDA():
                                               float_format="%.6f",
                                               justify="center",
                                               border=0)
-                            )
+                        )
                         f.write("</div>")
                         f.close()
                     #--------#
@@ -949,11 +990,12 @@ class LDA():
                     VAR.remove(VariableEliminee)
                     SummaryVarEliminees.append(
                         list(dfResults.loc[VariableEliminee])
-                        )
-                    L_initial = dfResults.loc[VariableEliminee, "Lambda de Wilks"]
+                    )
+                    L_initial = dfResults.loc[VariableEliminee,
+                                              "Lambda de Wilks"]
                     if CONSOLELOG:
                         print("La variable %s est éliminée." % (
-                            VariableEliminee))    
+                            VariableEliminee))
                     if HTMLFILE is not None:
                         with open(HTMLFILE, "a") as f:
                             f.write("<p>La variable %s est &#233;limin&#233;"
@@ -972,13 +1014,13 @@ class LDA():
                 print("Nombre de variables éliminées : %i" % (
                     len(ListeVarEliminees)))
                 print("-------- Variables éliminées --------")
-                print(Summary)       
+                print(Summary)
 
             if HTMLFILE is not None:
                 with open(HTMLFILE, "a") as f:
                     f.write("<h3>Synth&#232;se de la proc&#233;dure STEPDISC : "
                             "S&#233;lection ascendante</h3>")
-                    f.write("<p>Nombre de variables &#233;limin&#233;es : %i</p>" 
+                    f.write("<p>Nombre de variables &#233;limin&#233;es : %i</p>"
                             % (len(ListeVarEliminees)))
                     f.write("<h4>Variables &#233;limin&#233;es</h4><div "
                             "class='row justify-content-md-center'>")
@@ -987,11 +1029,11 @@ class LDA():
                                         float_format="%.6f",
                                         justify="center",
                                         border=0)
-                        )
+                    )
                     f.write("</div></div></body></html>")
                     f.close()
-            #---- FIN DE L'APPROCHE DESCENDANTE ----# 
+            #---- FIN DE L'APPROCHE DESCENDANTE ----#
         if BIGDATA:
             return WilksCurveInfo, dfResults, Summary
-        return dfResults, Summary         
-        #---- FIN PROCÉDURE STEPDISC ----# 
+        return dfResults, Summary
+        #---- FIN PROCÉDURE STEPDISC ----#
