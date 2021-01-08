@@ -30,6 +30,36 @@ class PDF(FPDF):
         self.set_text_color(128)
         # Page number
         self.cell(0, 10, 'Page ' + str(self.page_no()) + '/{nb}', 0, 0, 'C')
+        
+def verification_NA(X,Y):
+    """Vérification pour les valeurs nulles.
+    Les observations avec des valeurs nulles ne sont pas prises
+    en compte pour l'analyse.
+    La fonction affiche le nombre des observation supprimées.
+
+    Paramètres
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Input data.
+    y : array-like of shape (n_samples,) or (n_samples, n_targets) 
+        Valeurs cibles.
+        
+    Retour
+    -------
+    X : Input data sans NA.
+    y : Valeurs cibles sans NA.
+    
+    """
+    n, p = X.shape
+    # il faut concatener les inputs pour supprimer les lignes
+    # avec des valeurs nulles
+    df = pd.concat((X,Y),axis=1)
+    df.dropna(axis=0,inplace=True)
+    n_del = n - df.shape[0]
+    X = df.iloc[:,:-1]
+    Y = df.iloc[:,-1]
+    print('Attention: ',n_del,' observations ont été supprimees')
+    return X, Y
 
 def freq_relat(y, n):
     """Calcul des fréquences relatives.
@@ -60,6 +90,9 @@ def means_class(X,y):
         Input data.
     y : array-like of shape (n_samples,) or (n_samples, n_targets) 
         Target values.
+    Retour
+    -------
+    means_cl : moyennes conditionnelles par classe
     """
     #y1 convertion des valeurs cibles en numérique
     classes, y1 = np.unique(y, return_inverse=True)
@@ -218,24 +251,25 @@ def createWebFile(filename):
 
 class LDA():
     '''Analyse Discriminante Predictive reproduisant les calculs et les sorties
-    les methodes PROC DISCRIM ET STEPDISC de SAS
+    des methodes PROC DISCRIM et STEPDISC de SAS
     TBA = to be updated.
     '''
     
     
     def __init__(self):
         pass
-     
         
     def variables_explicatives(self,x) :
-        #La fonction variables_explicatives() permet de convertir des variables explicatives en variables numériques. Dans le cadre de notre projet LDA il suffit de lui donner
-        #en entrer les variables à convertir(explicatives) et il retourne variable un dataframe de variables numériques.
+        """La fonction variables_explicatives() permet de convertir des variables explicatives en variables numériques. 
+        Dans le cadre de notre projet LDA il suffit de lui donner en entrer les variables à convertir(explicatives) et 
+        il retourne variable un dataframe de variables numériques.
+        """
         
-        #convertir les colonnes non-numérique de x en objet :
-        d = dict()#Creation d'un dictionnaire vide 
-        #Apply permet ici de faire une boucle comme avec R. Cette ligne de code permet de convertir tester une variables est numérique ou pas
+        d = dict() #Creation d'un dictionnaire vide 
+        #Apply permet ici de faire une boucle comme avec R. 
+        #Cette ligne de code permet de convertir tester une variables est numérique ou pas
         d = x.apply(lambda s: pd.to_numeric(s, errors='coerce').notnull().all()) 
-        liste = d.values #liste reçoit les valeurs de d : soit False si la variable n'est pas numérqiue ou True sinon.
+        liste = d.values # False si la variable n'est pas numérqiue ou True sinon.
         for i in range(len(x.columns)) :
             #On convertit toutes les variables qui ne sont pas numériques en objet. 
             if liste[i]== False :
@@ -269,14 +303,14 @@ class LDA():
         -------
         self.intercept_ : l'intercept 
         self.coef_ : les coefficients
-    
         """
         
         #nombre d'effectif (n) et nombre de descripteurs (p)
         n, p = X.shape
         #noms des variables              
         cols = X.columns
-        
+        # supprimer des valeurs nulles de l'analyse
+        X, y = verification_NA(X,Y)
         X = X.values
         y = y.values
         #nombre de classes 
@@ -319,13 +353,10 @@ class LDA():
         dvc = dict()
         logdvc = dict()
         for elem in np.unique(y):
-            #print(elem)
             mvc[elem] = np.cov(my_pd[my_pd['target']==elem][cols].T)        
-            #print(mvc[elem])
             dvc[elem] = np.linalg.det(mvc[elem])
             logdvc[elem] = np.log(dvc[elem])
-            #print("DETERMINANT: ", dvc[elem])
-
+            
         #retrouve la matrice W de SAS + LW per classe
         W = 0
         for i,elem in enumerate(mvc.keys()):
@@ -415,7 +446,7 @@ class LDA():
         y_true : Series ou DataFrame
             Vraies valeurs de la variable cible.
         y_pred : array-like of shape (n_samples,) 
-            Valeurs predites de la variable cible.
+            Valeurs predites par le modèle de la variable cible.
         Retour:
         conf_mat : matrice de confusion
         '''
@@ -453,6 +484,7 @@ class LDA():
         y_pred : array-like of shape (n_samples,) 
             Valeurs predites de la variable cible.
         Retour:
+        ----------
         accuracy : (TP + TN) / (P + N)
         '''
         
