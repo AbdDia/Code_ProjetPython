@@ -217,7 +217,7 @@ def p_value(F, ddl1, ddl2):
     return (1.0 - stats.f.cdf(F, ddl1, ddl2))
 
 
-def variables_exlicatives(inputData):
+def recoder_variables_explicatives(inputData):
         """La fonction variables_exlicatives() permet de convertir des 
         variables inputData en variables numériques. 
         Dans le cadre de notre projet LDA il suffit de lui donner en entrée 
