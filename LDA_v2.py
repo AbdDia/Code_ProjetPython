@@ -344,10 +344,15 @@ class LinearDiscriminantAnalysis:
         ddlNum = self.p * (self.K - 1) # ddl du numérateur
         # Calcul du ddl du dénominateur
         temp = self.p**2 + (self.K-1)**2 - 5
-        temp = np.where(temp > 0,
-                        np.sqrt(((self.p**2) * ((self.K-1)**2) - 4)/temp),
-                        1)
-        
+        #Evite de diviser par 0 dans le cas ou "temp" sera egal à 0
+        if temp == 0 : 
+            temp = np.where(temp > 0,
+                            np.sqrt(((self.p**2) * ((self.K-1)**2) - 4)*1),
+                            1)
+        else : 
+            temp = np.where(temp > 0,
+                            np.sqrt(((self.p**2) * ((self.K-1)**2) - 4)/temp),
+                            1)
         ddlDenom = (2 * self.n - self.p - self.K - 2)/2*temp-(ddlNum - 2)/2
         # Fin calcul du ddl du dénominateur
         # Calcul de la F-statistique
@@ -382,19 +387,21 @@ class LinearDiscriminantAnalysis:
         pi_k = pd.DataFrame(freqClassValues.reshape(1, self.K),
                             columns=self.classNames)
         means = means_class(inputValues, targetValues) # moy cond
-        invW = np.linalg.inv(self.W) # matrice inverse de W
-        self.intercept_ = np.log(pi_k.values).reshape(1, self.K) - \
-            0.5 * np.diagonal(means @ invW @ means.T)
-        # coefficients associés aux variables de la fonction de classement
-        self.coef_ = (means @ invW).T 
-        # récupération des valeurs de la fonction de classement
-        self.infoFuncClassement = pd.concat(
+        if np.linalg.det(self.W) != 0 : 
+            invW = np.linalg.inv(self.W) # matrice inverse de W
+            self.intercept_ = np.log(pi_k.values).reshape(1, self.K) - \0.5 * np.diagonal(means @ invW @ means.T)
+            # coefficients associés aux variables de la fonction de classement
+            self.coef_ = (means @ invW).T 
+            # récupération des valeurs de la fonction de classement
+            self.infoFuncClassement = pd.concat(
             [pd.DataFrame(self.intercept_,
                           columns=self.classNames,
                           index=["Const"]), 
              pd.DataFrame(self.coef_,
                           columns=self.classNames,
                           index=self.varNames)])
+        else : 
+            print("Erreur : La matrice de variance-covariance n'est pas inversible ! ")
 
 
     def predict(self, inputData):
