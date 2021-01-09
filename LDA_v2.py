@@ -102,9 +102,9 @@ def means_class(inputData, targetValues):
         
     Sortie
     -------
-    means_cl : moyennes conditionnelles par classe
+    means_cls : moyennes conditionnelles par classe
     """
-    # y1 convertion des valeurs cibles en numérique
+    # classValues: convertion des valeurs cibles en numérique
     classNames, classValues = np.unique(targetValues, return_inverse=True)
     # Nk nombre d'effectifs par classes
     effClassValues = np.bincount(classValues)
@@ -214,15 +214,14 @@ def p_value(F, ddl1, ddl2):
     """
     if (F < 1): 
         return (1.0 - stats.f.cdf(1.0/F, ddl1, ddl2))
-    
     return (1.0 - stats.f.cdf(F, ddl1, ddl2))
 
 
 def variables_exlicatives(inputData):
-        """La fonction variables_einputDataplicatives() permet de convertir des 
-        variables einputDataplicatives en variables numériques. 
+        """La fonction variables_exlicatives() permet de convertir des 
+        variables inputData en variables numériques. 
         Dans le cadre de notre projet LDA il suffit de lui donner en entrée 
-        les variables (einputDataplicatives) à convertir et il retourne 
+        les variables (inputData) à convertir et il retourne 
         variable un dataframe de variables numériques.
         """
 
@@ -284,9 +283,9 @@ class LinearDiscriminantAnalysis:
     def __init__(self, dataset, classEtiquette, varNames=None):
         # jeu de données
         self.dataset = dataset
-        # nom de la variable catégorielle
+        # nom de la variable cible
         self.classEtiquette = classEtiquette
-        # noms des valeurs prises pour la variable catégorielle
+        # noms des valeurs prises pour la variable cible
         self.classNames = list(dataset[classEtiquette].unique()) 
         # nom des variables explicatives
         if varNames is None:
@@ -339,7 +338,8 @@ class LinearDiscriminantAnalysis:
 
     
     def stats_wilks(self):
-        #---- Statistiques du Lambda de Wilks ----#
+        """Statistiques du Lambda de Wilks
+        """
         L = wilks(self.Vb, self.Wb) # lambda de Wilks
         ddlNum = self.p * (self.K - 1) # ddl du numérateur
         # Calcul du ddl du dénominateur
@@ -363,7 +363,7 @@ class LinearDiscriminantAnalysis:
     
     def fit(self):
         """Apprentissage d'un modèle d'analyse discrimnante linéiare.
-        Calcul également des valeurs supplèmentaire pour l'affichage tels que
+        Calcul également des valeurs supplèmentaires pour l'affichage telles que
         la matrice de covariance intra-classe, le lambda de Wilks, la F-stat
         et la p-value.
         """
@@ -403,7 +403,11 @@ class LinearDiscriminantAnalysis:
         Paramètres
         ----------
         inputData : array-like of shape (n_samples, n_features)
-            Valeurs à predire.        
+            Valeurs à predire.  
+            
+        Renvoie
+        ----------
+        prediction : vecteur des classes predites, (n_samples,)
         """
         p = inputData.shape[1] # nombre de descripteurs
         predictedValues = [] # liste contenant les valeurs prédites
@@ -424,21 +428,20 @@ class LinearDiscriminantAnalysis:
             Vraies valeurs de la variable cible.
         y_pred : array-like of shape (n_samples,) 
             Valeurs predites par le modèle de la variable cible.
-            
+        
         Renvoie
         ----------
-        conf_mat : matrice de confusion
+        confMatrix : matrice de confusion
         """
-        # class_names = list(np.unique(y_true))
         class_to_num = {cl: num for num, cl in enumerate(np.unique(y_true))}
         y_true = np.array(y_true.apply(lambda cl: class_to_num[cl]))
         y_pred = np.array(pd.Series(y_pred).apply(lambda cl: class_to_num[cl]))
         confMatrix = np.zeros((len(np.unique(y_true)), len(np.unique(y_true))))
         for ind_p in range(len(np.unique(y_true))):
             for ind_t in range(len(np.unique(y_true))):
-                confMatrix[ind_p, ind_t] = (
-                    (np.sum((y_pred == ind_p) & (y_true == ind_t))))
+                confMatrix[ind_p, ind_t] = ((np.sum((y_pred == ind_p) & (y_true == ind_t))))
         self.confusionMatrix = confMatrix
+        return confMatrix
         
         if graphShow:
             infoConfusionMatrix = pd.DataFrame(
@@ -465,6 +468,7 @@ class LinearDiscriminantAnalysis:
         y_true = np.array(y_true.apply(lambda cl: classNumericValues[cl]))
         y_pred = np.array(pd.Series(y_pred).apply(lambda cl: classNumericValues[cl]))
         self.accuracy = (np.sum(y_pred == y_true))/y_true.shape[0]
+        return self.accuracy
 
     # à revoir pour le style CSS des tableaux ?
     def discrim_html_output(self):
@@ -486,7 +490,7 @@ class LinearDiscriminantAnalysis:
                            dp.Table(self.infoFuncClassement),
                            dp.Text("## Statistics. Wilks' Lambda"),
                            dp.Table(self.infoWilksStats))
-        report.save(path='DISCRIM-Results.html', open=True)
+        report.save(path='LDA-DISCRIM-Results.html', open=True)
 
 
     def discrim_pdf_output(self):
