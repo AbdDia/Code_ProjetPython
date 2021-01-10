@@ -185,16 +185,19 @@ class LinearDiscriminantAnalysis:
         confMatrix : matrice de confusion
         """
         class_to_num = {cl: num for num, cl in enumerate(np.unique(y_true))}
+        #conversion des variables cibles en numérique
         y_true = np.array(y_true.apply(lambda cl: class_to_num[cl]))
         y_pred = np.array(pd.Series(y_pred).apply(lambda cl: class_to_num[cl]))
-        confMatrix = np.zeros((len(np.unique(y_true)), len(np.unique(y_true))))
-        for ind_p in range(len(np.unique(y_true))):
-            for ind_t in range(len(np.unique(y_true))):
+        confMatrix = np.zeros((self.K, self.K))
+        #parcours de la matrice zéro de dim(K,K) 
+        #et calcul des cellules de la matrice de confusion
+        for ind_p in range(self.K):
+            for ind_t in range(self.K):
                 confMatrix[ind_p, ind_t] = (
                     (np.sum((y_pred == ind_p) & (y_true == ind_t))))
         self.confusionMatrix = confMatrix
         
-
+        #affichage en mode graphique grace à seaborn.heatmap
         if graphShow:
             infoConfusionMatrix = pd.DataFrame(self.confusionMatrix,
                                                index=self.classNames,
@@ -223,7 +226,7 @@ class LinearDiscriminantAnalysis:
         y_true = np.array(y_true.apply(lambda cl: classNumericValues[cl]))
         y_pred = np.array(pd.Series(y_pred).apply(
             lambda cl: classNumericValues[cl]))
-        self.accuracy = (np.sum(y_pred == y_true))/y_true.shape[0]
+        self.accuracy = np.sum(y_pred == y_true)/np.sum(self.confusionMatrix)
         return self.accuracy
 
     def wilks_decay(self, graphShow=True):
