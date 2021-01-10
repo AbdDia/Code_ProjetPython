@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Module regroupant les différentes classes pour la création de reporting
-automatique, en format HTML ou PDF, des PROC DISCRIM et STEPDISC.
+automatique, en format HTML ou PDF, dont les sorties ressemblent à celles 
+des PROC DISCRIM et STEPDISC de SAS.
 """
 
 # ---- data restitution librairies
@@ -36,13 +37,14 @@ class HTML:
                 <h2>Proc&#233;dure %s</h2>""") % (proc, proc)
         
     def stepdisc_html_output(self, ProcStepdisc, fileName):
-        """Création d'un reporting en format HTML pour la méthode PROC 
-        STEPDISC.
+        """Création d'un reporting en format HTML pour la méthode stepdisc 
+        de la classe LinearDiscriminantAnalysis
+        (qui ressemble à PROC STEPDISC de SAS).
         
         Paramètres
         ----------
         ProcStepdisc : objet LinearDiscriminantAnalysis
-            objet suite à appel de la fonction stepdisc() de la classe 
+            objet suite à appel de la méthode stepdisc() de la classe 
             LinearDiscriminantAnalysis
         fileName : string
             nom du fichier de sortie (avec ou sans .html)
@@ -71,14 +73,13 @@ class HTML:
             f.close()
             
     def discrim_html_output(self, ProcDiscrim, fileName):
-        """Création d'un reporting en format HTML pour la méthode PROC DISCRIM
-        grâce à la librairie datapane.
+        """Création d'un reporting en format HTML grâce à la librairie datapane.
         
         Paramètres
         ----------
         ProcDiscrim : objet LinearDiscriminantAnalysis
-            objet suite à appel de la fonction fit() de la classe 
-            LinearDiscriminantAnalysis
+            objet suite à appel de la méthode fit() et d'autres attributs
+            de la classe LinearDiscriminantAnalysis
         fileName : string
             nom du fichier de sortie (avec ou sans .html)
         """
@@ -162,8 +163,9 @@ class HTML:
 
 
 class PDF(FPDF):
-    """Pour reporting automatique en format PDF pour la méthode PROC DISCRIM
-    (fonction fit()).
+    """Reporting automatique en format PDF pour la méthode fit() 
+    et d'autres attributs de la classe LinearDiscriminantAnalysis
+    ressemblant aux sorties de la PROC DISCRIM de SAS.
     """
     # Page footer
     def footer(self):
@@ -210,13 +212,15 @@ class PDF(FPDF):
                  border=0, align='C')
         pdf.ln()
         pdf.set_font('Arial', '', 12)
+        #parcours de l'attribut de la classe LDA pour convertir
+        #les données en string et les ajouter dans les cellules de pdf.
         for indx, elem in enumerate(ProcDiscrim.infoDataset.index):
             pdf.cell(180, 10, str(ProcDiscrim.infoDataset.index[indx]) + ': ' +
                      str(ProcDiscrim.infoDataset.iloc[indx, 0]), border=0, align='L')
             pdf.ln()
         pdf.ln()
 
-        # Statistiques des classes
+        # ---- Statistiques des classes
         pdf.set_font('Arial', 'B', 14)
         pdf.cell(180, 10, ' '*(len(max(ProcDiscrim.infoClasses.index, key=len))*2) +
                  'Frequences ' + 'Proportions', border=0, align='C')
@@ -277,12 +281,12 @@ class PDF(FPDF):
                 pdf.cell(150, 10, my_str, border=0, align='L')
                 pdf.ln()
 
+         # ---- Lambda de Wilks
         pdf.set_font('Arial', 'B', 14)
         pdf.cell(180, 10, "Statistics. Wilks' Lambda", border=0, align='C')
         pdf.ln()
         pdf.set_font('Arial', '', 12)
-
-        # ---- Lambda de Wilks
+       
         for indx, elem in enumerate(ProcDiscrim.infoWilksStats.T.index):
             pdf.cell(180, 10, str(ProcDiscrim.infoWilksStats.T.index[indx]) + ': ' +
                      str(ProcDiscrim.infoWilksStats.T.iloc[indx, 0]), border=0,
