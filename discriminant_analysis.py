@@ -193,7 +193,7 @@ class LinearDiscriminantAnalysis:
                 confMatrix[ind_p, ind_t] = (
                     (np.sum((y_pred == ind_p) & (y_true == ind_t))))
         self.confusionMatrix = confMatrix
-        return confMatrix
+        
 
         if graphShow:
             infoConfusionMatrix = pd.DataFrame(self.confusionMatrix,
@@ -201,6 +201,8 @@ class LinearDiscriminantAnalysis:
                                                columns=self.classNames)
             self.confusionMatrixGraph = plt.figure(figsize=(10, 7))
             sns.heatmap(infoConfusionMatrix, annot=True)
+            
+        return confMatrix
 
     def accuracy_score(self, y_true, y_pred):
         """Calcul du taux de précision.
