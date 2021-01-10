@@ -77,7 +77,7 @@ def recodification_var_expl(inputData):
                 # pour chaque colonne de dummy, avec inputData le
                 # dataframe de base
                 inputData = pd.concat(
-                    [inputData, dummy.iloc[:, j]], ainputDatais=1)
+                    [inputData, dummy.iloc[:, j]], axis=1)
     # Suppression des colonnes non numerics
     inputData = inputData._get_numeric_data()
     return inputData
