@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+        <html lang="fr" dir="ltr">
+          <head>
+            <title>R&#233;sultats : DISCRIM</title>
+            <meta charset="utf-8" />
+            <style></style>
+            <link
+              rel="stylesheet"
+              href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+              integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
+              crossorigin="anonymous"
+            />
+          </head>
+          <body>
+            <div class="container text-center">
+                <h2>Proc&#233;dure DISCRIM</h2>
+                <h3>General information about the data</h3>
+                    <div class='row justify-content-md-center'><table border="0" class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: center;">
+      <th></th>
+      <th>Valeur</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Taille d'echantillon totale</th>
+      <td>52</td>
+    </tr>
+    <tr>
+      <th>Variables</th>
+      <td>8</td>
+    </tr>
+    <tr>
+      <th>Classes</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>Total DDL</th>
+      <td>51</td>
+    </tr>
+    <tr>
+      <th>DDL dans les classes</th>
+      <td>49</td>
+    </tr>
+    <tr>
+      <th>DDL entre les classes</th>
+      <td>2</td>
+    </tr>
+  </tbody>
+</table></div>
+                    <div class='row justify-content-md-center'><table border="0" class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: center;">
+      <th></th>
+      <th>Effectifs</th>
+      <th>Frequences</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>KIRSCH</th>
+      <td>17.000000</td>
+      <td>0.326923</td>
+    </tr>
+    <tr>
+      <th>MIRAB</th>
+      <td>15.000000</td>
+      <td>0.288462</td>
+    </tr>
+    <tr>
+      <th>POIRE</th>
+      <td>20.000000</td>
+      <td>0.384615</td>
+    </tr>
+  </tbody>
+</table></div>
+                <h3>Informations on the covariance matrix</h3>
+                    <div class='row justify-content-md-center'><table border="0" class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: center;">
+      <th></th>
+      <th>MEOH</th>
+      <th>ACET</th>
+      <th>BU1</th>
+      <th>BU2</th>
+      <th>ISOP</th>
+      <th>MEPR</th>
+      <th>PRO1</th>
+      <th>ACAL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>MEOH</th>
+      <td>40223.702461</td>
+      <td>7653.791777</td>
+      <td>299.526327</td>
+      <td>-2522.675774</td>
+      <td>3494.675210</td>
+      <td>1340.445258</td>
+      <td>7923.707923</td>
+      <td>833.681423</td>
+    </tr>
+    <tr>
+      <th>ACET</th>
+      <td>7653.791777</td>
+      <td>15093.472817</td>
+      <td>-110.066327</td>
+      <td>148.729756</td>
+      <td>293.413065</td>
+      <td>223.269220</td>
+      <td>14043.416983</td>
+      <td>462.680778</td>
+    </tr>
+    <tr>
+      <th>BU1</th>
+      <td>299.526327</td>
+      <td>-110.066327</td>
+      <td>36.221265</td>
+      <td>22.438000</td>
+      <td>70.236122</td>
+      <td>21.940816</td>
+      <td>272.533878</td>
+      <td>3.353327</td>
+    </tr>
+    <tr>
+      <th>BU2</th>
+      <td>-2522.675774</td>
+      <td>148.729756</td>
+      <td>22.438000</td>
+      <td>2825.927144</td>
+      <td>-431.046731</td>
+      <td>-91.429556</td>
+      <td>24116.532085</td>
+      <td>-22.957528</td>
+    </tr>
+    <tr>
+      <th>ISOP</th>
+      <td>3494.675210</td>
+      <td>293.413065</td>
+      <td>70.236122</td>
+      <td>-431.046731</td>
+      <td>2156.408183</td>
+      <td>615.874670</td>
+      <td>-1034.013045</td>
+      <td>15.066136</td>
+    </tr>
+    <tr>
+      <th>MEPR</th>
+      <td>1340.445258</td>
+      <td>223.269220</td>
+      <td>21.940816</td>
+      <td>-91.429556</td>
+      <td>615.874670</td>
+      <td>245.694886</td>
+      <td>305.218511</td>
+      <td>2.405330</td>
+    </tr>
+    <tr>
+      <th>PRO1</th>
+      <td>7923.707923</td>
+      <td>14043.416983</td>
+      <td>272.533878</td>
+      <td>24116.532085</td>
+      <td>-1034.013045</td>
+      <td>305.218511</td>
+      <td>340956.952013</td>
+      <td>798.808215</td>
+    </tr>
+    <tr>
+      <th>ACAL</th>
+      <td>833.681423</td>
+      <td>462.680778</td>
+      <td>3.353327</td>
+      <td>-22.957528</td>
+      <td>15.066136</td>
+      <td>2.405330</td>
+      <td>798.808215</td>
+      <td>66.145806</td>
+    </tr>
+  </tbody>
+</table></div>
+                    <div class='row justify-content-md-center'><table border="0" class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: center;">
+      <th></th>
+      <th>Valeurs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Rang de la mat. de cov. intra-classes</th>
+      <td>8.000000</td>
+    </tr>
+    <tr>
+      <th>Log. naturel du det. de la mat. de cov. intra-classes</th>
+      <td>58.326739</td>
+    </tr>
+  </tbody>
+</table></div>
+                <h3>Function of lda and its' intercept and coefficients</h3>
+                    <div class='row justify-content-md-center'><table border="0" class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: center;">
+      <th></th>
+      <th>KIRSCH</th>
+      <th>MIRAB</th>
+      <th>POIRE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Const</th>
+      <td>-5.016453</td>
+      <td>-18.840685</td>
+      <td>-24.764879</td>
+    </tr>
+    <tr>
+      <th>MEOH</th>
+      <td>0.003428</td>
+      <td>0.029028</td>
+      <td>0.033390</td>
+    </tr>
+    <tr>
+      <th>ACET</th>
+      <td>0.006390</td>
+      <td>0.016413</td>
+      <td>0.007513</td>
+    </tr>
+    <tr>
+      <th>BU1</th>
+      <td>-0.063681</td>
+      <td>0.405390</td>
+      <td>0.318047</td>
+    </tr>
+    <tr>
+      <th>BU2</th>
+      <td>-0.000883</td>
+      <td>0.071352</td>
+      <td>0.114993</td>
+    </tr>
+    <tr>
+      <th>ISOP</th>
+      <td>0.023082</td>
+      <td>0.029763</td>
+      <td>-0.008486</td>
+    </tr>
+    <tr>
+      <th>MEPR</th>
+      <td>0.037494</td>
+      <td>-0.128942</td>
+      <td>0.061780</td>
+    </tr>
+    <tr>
+      <th>PRO1</th>
+      <td>0.001971</td>
+      <td>-0.005413</td>
+      <td>-0.008318</td>
+    </tr>
+    <tr>
+      <th>ACAL</th>
+      <td>0.066184</td>
+      <td>-0.226424</td>
+      <td>-0.130332</td>
+    </tr>
+  </tbody>
+</table></div>
+                <h3>Statistics. Wilks' Lambda</h3>
+                    <div class='row justify-content-md-center'><table border="0" class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: center;">
+      <th></th>
+      <th>Valeur</th>
+      <th>F-Valeur</th>
+      <th>DDL num.</th>
+      <th>DDL den.</th>
+      <th>p-value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Lambda de Wilks</th>
+      <td>0.066713</td>
+      <td>15.076064</td>
+      <td>16.000000</td>
+      <td>84.000000</td>
+      <td>0.000000</td>
+    </tr>
+  </tbody>
+</table></div>
+                
