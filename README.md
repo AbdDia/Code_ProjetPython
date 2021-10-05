@@ -1,2 +1,2 @@
-# Proc Discrim Library in Python 
+# SAS Proc Discrim Library in Python 
 
